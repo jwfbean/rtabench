@@ -1,5 +1,5 @@
 SELECT
-    time_bucket('1 day', event_created) as day,
+    date_trunc('day', event_created) as day,
     count(*)
 FROM
     order_events
@@ -8,5 +8,5 @@ WHERE
     AND event_type = 'Departed'
     AND event_payload->>'terminal' = 'Berlin'
 GROUP BY
-    day 
+    day
 ORDER BY count desc, day;

@@ -6,9 +6,9 @@ FROM
     products p
     INNER JOIN order_items oi USING (product_id)
     INNER JOIN order_events oe ON oe.order_id = oi.order_id
-WHERE oe.event_payload->>'terminal' = 'Berlin'
+    WHERE oe.event_payload->>'terminal' = 'Berlin'
     AND oe.event_created >= '2024-07-01' and oe.event_created < '2025-01-01'
-    AND event_type = 'Delivered'
+    AND oe.event_type = 'Delivered'
 GROUP BY
     p.product_id
 ORDER BY

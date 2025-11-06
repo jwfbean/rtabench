@@ -1,6 +1,6 @@
 WITH hourly_stats AS (
   SELECT 
-    time_bucket('1 hour', event_created) as hour,
+    date_trunc('hour', event_created) as hour,
     event_payload->>'terminal' as terminal,
     count(*) as event_count
   FROM order_events
@@ -13,8 +13,8 @@ SELECT
   hour,
   terminal,
   event_count,
-  avg(event_count) OVER (
-    PARTITION BY terminal 
+  AVG(event_count) OVER (
+    PARTITION BY terminal
     ORDER BY hour
     ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
   ) as moving_avg_events

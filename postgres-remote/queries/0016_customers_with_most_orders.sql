@@ -1,4 +1,3 @@
-
 SELECT
     c.customer_id,
     c.name,

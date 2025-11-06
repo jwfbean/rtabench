@@ -1,6 +1,6 @@
 
 SELECT
-    c.country,
+	c.country,
     p.category,
     sum(p.price * oi.amount)
 FROM

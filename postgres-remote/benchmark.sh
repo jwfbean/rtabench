@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CONNECTION_STRING="postgres://{username}:{your-password}@postgres-rtabench.postgres.database.azure.com:5432/postgres?sslmode=require"
+export CONNECTION_STRING=YOUR_STRING_HERE
 
 sudo apt-get update
 
@@ -16,45 +16,31 @@ chmod 777 customers.csv products.csv orders.csv order_items.csv order_events.csv
 mkdir -p dataset
 mv *.csv dataset/
 
-#install postgres client
-sudo apt-get update
-sudo apt install -y postgresql-common gnupg software-properties-common
+sudo apt install -y postgresql-common
 sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-sudo bash -c 'echo "deb https://packagecloud.io/timescale/timescaledb/ubuntu/ $(lsb_release -c -s) main" > /etc/apt/sources.list.d/timescaledb.list'
-wget --quiet -O - https://packagecloud.io/timescale/timescaledb/gpgkey | sudo apt-key add -
+
 sudo apt-get update
-sudo apt install -y postgresql-client-17 timescaledb-tools
-
-
-psql "$CONNECTION_STRING" -c "ALTER DATABASE tsdb SET timescaledb.enable_chunk_skipping to ON;"
+sudo apt install -y postgresql-client-17
 
 # Import the data
 psql "$CONNECTION_STRING" < create.sql #import
-psql "$CONNECTION_STRING" -c "SELECT * FROM enable_chunk_skipping('order_events', 'order_id');"
-psql "$CONNECTION_STRING" -c "ALTER TABLE order_events SET (timescaledb.compress, timescaledb.compress_segmentby = '', timescaledb.compress_orderby = 'order_id, event_created')" #import
 
-timescaledb-parallel-copy -table customers -file dataset/customers.csv -connection "$CONNECTION_STRING"  -workers 8 #import      
-timescaledb-parallel-copy -table products -file dataset/products.csv  -connection "$CONNECTION_STRING"  -workers 8 #import        
-timescaledb-parallel-copy -table orders -file dataset/orders.csv -connection "$CONNECTION_STRING"  -workers 8 #import            
-timescaledb-parallel-copy -table order_items -file dataset/order_items.csv -connection "$CONNECTION_STRING"  -workers 8 #import  
-timescaledb-parallel-copy -table order_events -file dataset/order_events.csv  -connection "$CONNECTION_STRING"  -workers 8 #import
+psql "$CONNECTION_STRING" -t -c '\timing' -c "\\COPY customers FROM 'dataset/customers.csv' WITH (FORMAT csv);" #import
+psql "$CONNECTION_STRING" -t -c '\timing' -c "\\COPY products FROM 'dataset/products.csv' WITH (FORMAT csv);" #import
+psql "$CONNECTION_STRING" -t -c '\timing' -c "\\COPY orders FROM 'dataset/orders.csv' WITH (FORMAT csv);" #import
+psql "$CONNECTION_STRING" -t -c '\timing' -c "\\COPY order_items FROM 'dataset/order_items.csv' WITH (FORMAT csv);" #import
+psql "$CONNECTION_STRING" -t -c '\timing' -c "\\COPY order_events FROM 'dataset/order_events.csv' WITH (FORMAT csv);" #import
 
-./compress.sh #import
+psql "$CONNECTION_STRING" -t -c '\timing' -c "CREATE INDEX orders_customer_id_index ON orders (customer_id);"
+psql "$CONNECTION_STRING" -t -c '\timing' -c "CREATE INDEX order_events_order_id_index ON order_events (order_id);"
+psql "$CONNECTION_STRING" -t -c '\timing' -c "CREATE INDEX order_events_event_type_index ON order_events (event_type);"
 
-psql "$CONNECTION_STRING" -c "vacuum freeze analyze orders;" #import
-psql "$CONNECTION_STRING" -c "vacuum freeze analyze order_events;" #import
-
-psql "$CONNECTION_STRING" -c "\t" -c "SELECT hypertable_size('order_events') + pg_total_relation_size('orders') + pg_total_relation_size('order_items') + pg_total_relation_size('products') + pg_total_relation_size('customers');" #datasize
+psql "$CONNECTION_STRING" -c "\t" -c "SELECT pg_total_relation_size('order_events') + pg_total_relation_size('orders') + pg_total_relation_size('order_items') + pg_total_relation_size('products') + pg_total_relation_size('customers') + pg_indexes_size('order_events') + pg_indexes_size('orders') + pg_indexes_size('customers') + pg_indexes_size('products') + pg_indexes_size('order_items');" #datasize
 
 ./run.sh 2>&1 | tee log.txt
 
 cat log.txt | grep -oP 'Time: \d+\.\d+ ms' | sed -r -e 's/Time: ([0-9]+\.[0-9]+) ms/\1/' |
   awk '{ if (i % 3 == 0) { printf "[" }; printf $1 / 1000; if (i % 3 != 2) { printf "," } else { print "]," }; ++i; }'  #results
 
-[[ "$SIZE" == "16000" ]] && echo "16 vCPU 64GB" || ([[ "$SIZE" == "8000" ]] && echo "8 vCPU 32GB") || ([[ "$SIZE" == "4000" ]] && echo "4 vCPU 16GB") #machineType
-
-echo "Azure Managed Postgres" #name
-echo "Insert" #mv_supported_capability
-echo "Update" #mv_supported_capability
-echo "Upsert" #mv_supported_capability
-echo "Delete" #mv_supported_capability
+echo "General Purpose" #tag
+echo "Postgres" #name

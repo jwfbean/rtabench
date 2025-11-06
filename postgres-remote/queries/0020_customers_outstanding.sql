@@ -21,3 +21,4 @@ WHERE
                     oe.event_type = 'Delivered'
                     AND oe.order_id = o.order_id))
 ORDER BY c.customer_id;
+
