@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CONNECTION_STRING=YOUR_STRING_HERE
+export CONNECTION_STRING="postgres://{username}:{your-password}@postgres-rtabench.postgres.database.azure.com:5432/postgres?sslmode=require"
 
 sudo apt-get update
 
