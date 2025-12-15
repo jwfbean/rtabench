@@ -1,0 +1,15 @@
+DROP MATERIALIZED VIEW IF EXISTS cagg_order_events_0004;
+DROP MATERIALIZED VIEW IF EXISTS cagg_order_events_0008;
+DROP MATERIALIZED VIEW IF EXISTS cagg_order_events_q12;
+DROP MATERIALIZED VIEW IF EXISTS cagg_order_events_q13;
+DROP MATERIALIZED VIEW IF EXISTS cagg_top_sales_volume_category_weekly;
+DROP MATERIALIZED VIEW IF EXISTS cagg_top_selling_product_semester;
+DROP MATERIALIZED VIEW IF EXISTS cagg_top_selling_month_product_q17;
+DROP MATERIALIZED VIEW IF EXISTS cagg_customers_with_most_orders_delivered;
+DROP MATERIALIZED VIEW IF EXISTS cagg_order_events_per_terminal_per_hour;
+DROP MATERIALIZED VIEW IF EXISTS cagg_country_category_monthly_performance;
+DROP TABLE order_events;
+DROP TABLE customers;
+DROP TABLE products;
+DROP TABLE orders;
+DROP TABLE order_items;
